@@ -1,0 +1,41 @@
+volumes:
+  kabshop_data:
+
+services:
+  db:
+    container_name: kabshop-database
+    image: postgres:17-alpine
+    restart: on-failure
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=kabshop
+      - POSTGRES_USER=local
+      - POSTGRES_PASSWORD=local
+    volumes:
+      - kabshop_data:/var/lib/postgresql/data
+
+  server:
+    container_name: kabshop-server
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    ports:
+      - '4000:4000'
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://local:local@db:5432/kabshop?schema=public
+      - NEXTAUTH_SECRET=4tL2WQ12R1/1iMISDofK+PpVhrVDGmyKOuna9QFh8xo=
+      - NEXTAUTH_URL=https://preview.kivotos.sh
+    depends_on:
+      - db
+
+  client:
+    container_name: kabshop-client
+    build:
+      context: .
+      dockerfile: apps/client/Dockerfile
+    ports:
+      - '3000:3000'
+    depends_on:
+      - server
